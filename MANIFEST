@@ -1,0 +1,6 @@
+Changes
+LICENSE
+Makefile.PL
+README
+lib/Test/WWW/Mechanize/YAML.pm
+t/YAML.t
