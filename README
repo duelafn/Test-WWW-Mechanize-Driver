@@ -1,5 +1,5 @@
-Test::WWW::Mechanize::YAML version 0.5
-======================================
+Test::WWW::Mechanize::Driver version 0.5
+========================================
 
 Write Test::WWW::Mechanize tests in YAML. This module will load the tests
 make a plan and run the tests. Supports every-page tests, SKIP, TODO, and
@@ -15,7 +15,7 @@ This module requires these other modules and libraries:
 
 For a complete tree of dependencies, see:
 
-  http://deps.cpantesters.org/?module=Test::WWW::Mechanize::YAML
+  http://deps.cpantesters.org/?module=Test::WWW::Mechanize::Driver
 
 
 INSTALLATION

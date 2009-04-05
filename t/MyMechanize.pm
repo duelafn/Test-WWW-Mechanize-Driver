@@ -1,6 +1,7 @@
 package MyMechanize;
 use strict; use warnings;
-use base qw/WWW::Mechanize/;
+use base qw/Test::WWW::Mechanize/;
+require URI;
 require YAML;
 
 # a shared cache (over all Mech objects) will work just fine
@@ -12,7 +13,7 @@ my %cache;
 sub my_mech_load_files {
   my $x = shift;
   for (@_) {
-    my ($meta, $res) = YAML::LoadFile($_) || die "YAML Load Error";
+    my ($meta, $res) = YAML::LoadFile($_) or die "YAML Load Error";
     $$meta{response} = $res;
 
     $$meta{uri} = [$$meta{uri}] unless ref($$meta{uri});
@@ -20,6 +21,7 @@ sub my_mech_load_files {
     # many uris may refer to the same cached page
     $cache{$_} = $meta for @{$$meta{uri}};
   }
+  return scalar(keys %cache);
 }
 
 
@@ -27,9 +29,12 @@ sub _make_request {
   my $x = shift;
   my $req = shift;
   my $uri = $req->uri;
+  my $base = URI->new_abs( $uri, 'http://localhost/' );
 
   die "Request uri '$uri' does not exist in cache\n" unless exists $cache{$uri};
-  return HTTP::Response->parse( $cache{$uri}{response} );
+  my $res = HTTP::Response->parse( $cache{$uri}{response} );
+  $res->request($req);
+  return $res;
 }
 
 

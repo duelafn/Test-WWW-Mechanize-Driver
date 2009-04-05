@@ -2,19 +2,18 @@
 use strict; use warnings;
 use lib qw/ t /;
 
-use Test::More qw(no_plan);
+use Test::More;
 use MyMechanize;
-use Test::WWW::Mechanize::YAML;
+use Test::WWW::Mechanize::Driver;
 
-my $tester = Test::WWW::Mechanize::YAML->new(
+my $tester = Test::WWW::Mechanize::Driver->new(
   mechanize => MyMechanize->new,
   add_to_plan => 3,
+  first_test => 3,
+  load => "t/05-basic.yml", # 8 tests
 );
 
-
-$tester->load( "t/00-basic.yml" );# 8 tests
-
-print $tester->plan;
+plan tests => 12;
 
 is( 1 + 1, 2, "I always wanted to test that" );
 

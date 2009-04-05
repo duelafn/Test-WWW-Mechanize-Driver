@@ -1,18 +1,9 @@
-package Test::WWW::Mechanize::YAML;
-use Carp; use strict; use warnings;
-our $VERSION = 0.5;
-
 
 =pod
 
 =head1 NAME
 
-Test::WWW::Mechanize::YAML - Drive Test::WWW::Mechanize Object Using YAML Configuration Files
-
-=head1 SYNOPSIS
-
- use strict;
- use Test::WWW::Mechanize::YAML;
+Test::WWW::Mechanize::Driver::Manual - Writing Tests for Test::WWW::Mechanize::Driver
 
 =head1 DESCRIPTION
 
@@ -20,14 +11,53 @@ Write Test::WWW::Mechanize tests in YAML. This module will load the tests
 make a plan and run the tests. Supports every-page tests, SKIP, TODO, and
 any object supporting the Test::WWW::Mechanize interface.
 
+ use strict; use warnings;
+ use Test::WWW::Mechanize::Driver;
+ use Test::More;
+
+ my $tester = Test::WWW::Mechanize::Driver->new(
+   load => [ glob( "t/*.yaml" ) ],
+   add_to_plan => 10,
+   first_test => 11,
+ );
+
+ plan tests => $tester->tests;
+ ok( ... ); # 10 of your own tests
+ $tester->run;
+
+
 =head1 USAGE
 
-=cut
+
+
+
+Test::WWW::Mechanize::Driver::Prove
+
+ Fast / Fatal
+ Test Selection
+
+Test::WWW::Mechanize::Driver
+
+ Standard Test::WWW::Mechanize tests
+ Logins / who
+ GET, POST, ...
+ SKIP, TODO URLs
+ Every-page Tests; pre_testing => sub { }, test_first => sub { }, test_last => sub { }
+
+
+Test::WWW::Mechanize::More
+
+ Canonicalization (update_html)
+ Test vs Production Comparison
 
 
 
 
-1;
+=head1 WISHLIST / TODO
+
+=head2 SKIP, TODO Tests
+
+
 
 =head1 AUTHOR
 

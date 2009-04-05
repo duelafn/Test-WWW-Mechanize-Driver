@@ -1,6 +1,6 @@
 --- |
 
-Basic test of Test::WWW::Mechanize::YAML features. First a comment
+Basic test of Test::WWW::Mechanize::Driver features. First a comment
 document. It should be ignored completely.
 
 ---
@@ -11,7 +11,7 @@ tags: basic
 ---
 # This is a test document
 
-- uri: home.html
+- uri: http://test/home.html
   description: The very basic tests of functionality
   title_is: Dean Serenevy
   contains:
@@ -19,13 +19,13 @@ tags: basic
     - Riverbend Community Math Center
 
 # This is what a TODO test would look like:
-- uri: missing.html
+- uri: http://test/missing.html
   TODO: Create this page
   contains:
     - The answers to the universe
 
 # This is what a skipped test would look like:
-- url: Unfinished.cgi
+- url: http://test/Unfinished.cgi
   SKIP: Not yet finished
   contains:
     - ...

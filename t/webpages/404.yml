@@ -1,5 +1,5 @@
 ---
-uri: missing.html
+uri: http://test/missing.html
 
 request: 'http://serenevy.net/missing_page'
 --- |
