@@ -3,6 +3,7 @@ use Carp; use strict; use warnings;
 use Test::WWW::Mechanize::Driver::YAMLLoader;
 use Test::WWW::Mechanize::Driver::Util qw/ cat TRUE HAS /;
 use Test::Builder;
+use File::Spec;
 use List::Util qw/sum/;
 my $Test = Test::Builder->new;
 our $VERSION = 0.5;
@@ -124,7 +125,7 @@ Run each group of tests
 
 sub run {
   my $x = shift;
-  # TODO: $x->_autoload unless $$x{_loaded};
+  $x->_autoload unless $$x{_loaded};
   die "No test groups!" unless $$x{groups};
   $x->_ensure_plan;
   $x->_run_group( $_ ) for @{$$x{groups}};
@@ -460,8 +461,22 @@ sub _test_label {
   "$name: file $file, doc $doc, group $group, test @id"
 }
 
+=head3 _autoload
 
+ $tester->_autoload()
 
+Attempt to load test files based on current script name. removes .t or .pl
+from C<$0> and globs C<base*.{yaml,yml,dat}>
+
+=cut
+
+sub _autoload {
+  my $x = shift;
+  my $glob = $0;
+  $glob =~ s/\.(?:t|pl)$//;
+  my @autoload = grep +(-r $_), glob("$glob*.{yaml,yml,dat}");
+  $x->load( @autoload );
+}
 
 =head3 _clear_local_config
 

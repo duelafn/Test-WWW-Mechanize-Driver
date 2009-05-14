@@ -10,6 +10,8 @@ t/00-my_mech.t
 t/05-basic.t
 t/05-basic.yml
 t/06-add_to_plan.t
+t/07-auto_loading.t
+t/07-auto_loading.yml
 t/10-typical_usage_1.yml
 t/10-typical_usage_2.yml
 t/10-typical_usage.t
