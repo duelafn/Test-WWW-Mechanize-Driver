@@ -37,6 +37,8 @@ any object supporting the Test::WWW::Mechanize interface.
 
 =head3 new
 
+ Test::WWW::Mechanize::Driver->new( [ OPTIONS ] )
+
 =over 4
 
 =item mechanize
@@ -61,8 +63,10 @@ Defaults to C<Test::WWW::Mechanize::Driver::YAMLLoader>.
 sub new {
   my $class = shift;
   my %x = @_;
-  # Create object so that "require YAML" happens early on
+
+  # Create loader so that "require YAML" happens early on
   $x{loader} ||= Test::WWW::Mechanize::Driver::YAMLLoader->new;
+
   my $x = bless \%x, $class;
   $x->load;
   return $x;
@@ -70,16 +74,19 @@ sub new {
 
 =head3 load
 
- $x->load( @yaml_test_filenames )
+ num tests loaded = $tester->load( test filenames )
 
-Load additional tests.
+Load tests.
 
 =cut
 
 sub load {
   my $x = shift;
+
   $$x{load} = [ $$x{load} ] if HAS($x, 'load') and !ref($$x{load});
+
   push @{$$x{load}}, @_;
+
   my $t = $x->tests;
   $x->_load;
   $x->tests - $t;
@@ -87,19 +94,29 @@ sub load {
 
 =head3 tests
 
+ num tests = $tester->tests()
+
 Calculate number of tests currently loaded
 
 =cut
 
 sub tests {
   my $x = shift;
-  return 0 unless $$x{groups};
-  my $tests = sum(map 0+@{$$_{actions}}, @{$$x{groups}});
-  $tests += 1 * @{$$x{groups}};
-  return $tests + ($$x{add_to_plan} || 0);
+  my $tests = $$x{add_to_plan} || 0;
+  return $tests unless $$x{groups};
+
+  # 1 test for each group (the initial request)
+  $tests += @{$$x{groups}};
+
+  # 1 test for each action in each group
+  $tests += sum(map 0+@{$$_{actions}}, @{$$x{groups}});
+
+  return $tests;
 }
 
 =head3 run
+
+ $tester->run()
 
 Run each group of tests
 
@@ -107,12 +124,15 @@ Run each group of tests
 
 sub run {
   my $x = shift;
-  $x->_ensure_plan;
+  # TODO: $x->_autoload unless $$x{_loaded};
   die "No test groups!" unless $$x{groups};
+  $x->_ensure_plan;
   $x->_run_group( $_ ) for @{$$x{groups}};
 }
 
 =head3 mechanize
+
+ mech = $tester->mechanize()
 
 Return or construct mechanize object
 
@@ -123,7 +143,11 @@ sub mechanize {
   $$x{mechanize} ||= Test::WWW::Mechanize->new(cookie_jar => {});
 }
 
+=head1 INTERNAL METHODS
+
 =head3 _ensure_plan
+
+ $tester->_ensure_plan()
 
 Feed a plan (expected_tests) to Test::Builder if a plan has not yet been given.
 
@@ -136,7 +160,10 @@ sub _ensure_plan {
 
 =head3 _run_group
 
-Run a group of tests
+ $tester->_run_group( group hash )
+
+Run a group of tests. Performs group-level actions (SKIP, TODO) and tests
+initial request.
 
 =cut
 
@@ -155,7 +182,17 @@ sub _run_group {
 
 =head3 _run_test
 
-Run an individual test
+ $tester->_run_test( group hash, test hash )
+
+Run an individual test. Tests (an action) at theis stage should be in one
+of the following forms:
+
+ { sub => sub { ... do stuff },
+ }
+
+ { name => "mechanize method name",
+   args => [ array of method arguments ],
+ }
 
 =cut
 
@@ -172,10 +209,10 @@ sub _run_test {
 
 =head3 _load
 
- $x->_load()
+ $tester->_load()
 
-Open test file and attempt to load each contained document. Each testfile
-is loaded only once.
+Open test files (listed in C<@{$$x{load}}>) and attempt to load each
+contained document. Each testfile is loaded only once.
 
 =cut
 
@@ -185,16 +222,21 @@ sub _load {
 
   for my $file (@{$$x{load}}) {
     next if $$x{_loaded}{$file}++;
-    $x->_clear_local_config;
+
     my @docs = eval { $$x{loader}->load( $file ) };
     die "While parsing test file '$file':\n$@" if $@;
 
     my $document = 1;
     $x->_load_doc( $_, [$file, $document++] ) for @docs;
+
+    # local configs last only until end of file
+    $x->_clear_local_config;
   }
 }
 
 =head3 _load_doc
+
+ $tester->_load_doc( any doc, id array )
 
 Determine document type and hand off to appropriate loaders.
 
@@ -221,25 +263,23 @@ sub _load_doc {
   }
 }
 
-=head3 _load_test
+=head3 _load_group
 
-Actually perform test "loading". As tests are loaded the they are:
+ $tester->_load_group( non-canonical group hash, id array )
+
+Actually perform test "loading". As test groups are loaded the they are:
 
  * canonicalized: all tests moved to actions array with one test per entry
- * tallied: tallies are kept in the master object
  * tagged: the test's location in the file is inserted into the test hash
 
 =cut
 
 our %config_options = map +($_,1),
 qw/
-
-method
-uri
-url
-
+    method uri url
 /;
 
+# mech methods
 our %scalar_tests = map +($_,1),
 qw/
     title_is title_like title_unlike
@@ -249,6 +289,7 @@ qw/
     links_ok
 /;
 
+# values are mech methods
 our %aliases =
 qw/
     is          content_is
@@ -258,6 +299,7 @@ qw/
     unlike      content_unlike
 /;
 
+# mech methods
 our %bool_tests = map +($_,1), qw/ page_links_ok /;
 our %hash_tests = map +($_,1), qw/ submit_form_ok stuff_inputs /;
 our %mech_action = map +($_,1),
@@ -272,20 +314,22 @@ qw/
 sub _load_group {
   my ($x, $group, $id) = @_;
 
-  # We're all about convenience here, I want to be able to perform simple
-  # contains tests without setting up an "actions" sequence. To do that, we
-  # need to munge the group hash a bit.
+  # We're all about convenience here, For example, I want to be able to
+  # perform simple contains tests without setting up an "actions" sequence.
+  # To do that, we need to munge the group hash a bit.
   my @keys = keys %$group;
   my @actions;
   for (@keys) {
-    # the actual "sctions" element, pushed to end of actions array so it
+    # the actual "actions" element, pushed to end of actions array so it
     # happens after the toplevel actions.
     if ($_ eq 'actions') { push @actions, @{delete $$group{actions}} }
 
     # leave internal configuration options where they are
     elsif (TRUE \%config_options, $_) { next; }
 
-    # Put anything that looks like a test action on the front of the action list.
+    # Put anything that looks like a test action on the front of the action
+    # list (again, so that explicit action sequences occur after transplanted
+    # initial load actions).
     elsif (TRUE( \%scalar_tests, $_ )
         or TRUE( \%bool_tests, $_ )
         or TRUE( \%hash_tests, $_ )
@@ -308,12 +352,12 @@ sub _load_group {
 
 =head3 _prepare_actions
 
- $x->_prepare_actions( group_hashref, actions_arrayref, id_arrayref )
+ canon-test (actions) array = $x->_prepare_actions( canon-group hash, actions array, group id array )
 
 Prepare array of actions by:
 
- * expanding argument lists
- * insert get_ok tests
+ * expanding aliases
+ * expanding tests
 
 =cut
 
@@ -337,11 +381,17 @@ sub _prepare_actions {
   return \@expanded;
 }
 
-sub _test_label {
-  my ($x, $name, $file, $doc, $group, @id) = @_;
-  local $" = '.';
-  "$name: file $file, doc $doc, group $group, test @id"
-}
+
+=head3 _expand_tests
+
+ list of canon-tests = $tester->_expand_tests( canon-group hash, non-canon action item, id array )
+
+Expand a logical action item into possibly many explicit test items. When
+executed, each test item will increment the test count be exactly 1.
+
+ * prepares argument list
+
+=cut
 
 sub _expand_tests {
   my ($x, $group, $action, $id) = @_;
@@ -362,7 +412,7 @@ sub _expand_tests {
     $$action{id} = [@$id, $test++];
     $$action{args} = [$$action{args}, $x->_test_label($name, @{$$action{id}})];
     push @tests, $action;
-    push @tests, $x->_every_get_test([@$id, $test++]) if $$x{every_get};
+    # TODO: push @tests, $x->_every_get_test([@$id, $test++]) if $$x{every_get};
     return @tests;
   }
 
@@ -377,17 +427,37 @@ sub _expand_tests {
   if (TRUE( \%mech_action, $name )) {
     $$action{id} = $id;
     $$action{sub} = sub {
-      $x->mechanize->$name( ('ARRAY' eq ref($args)) ? @$args
-                          : ('HASH'  eq ref($args)) ? %$args
-                          : $args
-                          );
-      # plain mechanize actions don't report "ok". Force a passing test
-      # since we take an action spot.
-      local $Test::Builder::Level = $Test::Builder::Level + 2;
-      $Test->ok(1, "$name mechanize action");
+      my $res = eval {
+        $x->mechanize->$name( ('ARRAY' eq ref($args)) ? @$args
+                            : ('HASH'  eq ref($args)) ? %$args
+                            : $args
+                            );
+        1;
+      };
+      # plain mechanize actions don't report "ok". Force a test based on
+      # just evaluation fatality since we take an action spot.
+      local $Test::Builder::Level = $Test::Builder::Level + 1;
+      $Test->diag( "$name: $@" ) if $@;
+      $Test->ok(($res and !$@), "$name mechanize action");
     };
     return $action;
   }
+}
+
+=head3 _test_label
+
+ label = $tester->_test_label( name, id list )
+
+Convert id components into something human-readable. For example:
+
+ "content_contains: file basic.yml, doc 3, group 5, test 2.b"
+
+=cut
+
+sub _test_label {
+  my ($x, $name, $file, $doc, $group, @id) = @_;
+  local $" = '.';
+  "$name: file $file, doc $doc, group $group, test @id"
 }
 
 
@@ -395,8 +465,10 @@ sub _expand_tests {
 
 =head3 _clear_local_config
 
-Configs local to a series of test documents are cleared after each file is
-loaded.
+ $tester->_clear_local_config()
+
+Configs local to a series of test documents should be cleared after each
+file is loaded.
 
 =cut
 
