@@ -63,7 +63,9 @@ sub new {
   my %x = @_;
   # Create object so that "require YAML" happens early on
   $x{loader} ||= Test::WWW::Mechanize::Driver::YAMLLoader->new;
-  bless \%x, $class;
+  my $x = bless \%x, $class;
+  $x->load;
+  return $x;
 }
 
 =head3 load
@@ -76,6 +78,7 @@ Load additional tests.
 
 sub load {
   my $x = shift;
+  $$x{load} = [ $$x{load} ] if HAS($x, 'load') and !ref($$x{load});
   push @{$$x{load}}, @_;
   my $t = $x->tests;
   $x->_load;
@@ -93,7 +96,7 @@ sub tests {
   return 0 unless $$x{groups};
   my $tests = sum(map 0+@{$$_{actions}}, @{$$x{groups}});
   $tests += 1 * @{$$x{groups}};
-  return $tests;
+  return $tests + ($$x{add_to_plan} || 0);
 }
 
 =head3 run
@@ -104,6 +107,7 @@ Run each group of tests
 
 sub run {
   my $x = shift;
+  $x->_ensure_plan;
   die "No test groups!" unless $$x{groups};
   $x->_run_group( $_ ) for @{$$x{groups}};
 }
@@ -119,6 +123,16 @@ sub mechanize {
   $$x{mechanize} ||= Test::WWW::Mechanize->new(cookie_jar => {});
 }
 
+=head3 _ensure_plan
+
+Feed a plan (expected_tests) to Test::Builder if a plan has not yet been given.
+
+=cut
+
+sub _ensure_plan {
+  my $x = shift;
+  $Test->expected_tests($x->tests) unless $Test->expected_tests;
+}
 
 =head3 _run_group
 
@@ -167,7 +181,7 @@ is loaded only once.
 
 sub _load {
   my $x = shift;
-  return unless $$x{load};
+  return unless HAS($x, 'load') and 'ARRAY' eq ref($$x{load});
 
   for my $file (@{$$x{load}}) {
     next if $$x{_loaded}{$file}++;

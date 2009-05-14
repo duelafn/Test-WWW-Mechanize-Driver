@@ -9,15 +9,15 @@ use Test::WWW::Mechanize::Driver;
 my $tester = Test::WWW::Mechanize::Driver->new(
   mechanize => MyMechanize->new,
   add_to_plan => 3,
-  first_test => 3,
   load => "t/05-basic.yml", # 8 tests
 );
+$tester->mechanize->my_mech_load_files( glob("t/webpages/*.yml") );
 
-plan tests => 12;
+plan tests => 11;
 
 is( 1 + 1, 2, "I always wanted to test that" );
 
-is( $tester->tests, 12, "test count is correct" );
+is( $tester->tests, 11, "test count is correct" );
 
 $tester->run;
 
