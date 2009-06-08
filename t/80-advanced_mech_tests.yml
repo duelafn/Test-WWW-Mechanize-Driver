@@ -1,0 +1,55 @@
+--- |
+
+our %config_options = map +($_,1),
+qw/
+    method uri url
+/;
+
+# mech methods
+our %scalar_tests = map +($_,1),
+qw/
+    title_is title_like title_unlike
+    base_is base_like base_unlike
+    content_is content_contains content_lacks content_like content_unlike
+    page_links_content_like page_links_content_unlike
+    links_ok
+/;
+
+# values are mech methods
+our %aliases =
+qw/
+    is          content_is
+    contains    content_contains
+    lacks       content_lacks
+    like        content_like
+    unlike      content_unlike
+/;
+
+# mech methods
+our %bool_tests = map +($_,1), qw/ page_links_ok /;
+our %hash_tests = map +($_,1), qw/ submit_form_ok stuff_inputs /;
+our %mech_action = map +($_,1),
+qw/
+    get put reload back follow_link form_number form_name
+    form_with_fields field select set_fields set_visible tick untick
+    click click_button submit submit_form add_header delete_header
+    save_content dump_links dump_images dump_forms dump_all redirect_ok
+    request credentials
+/;
+
+# $mech->get_ok($url,  [ \%LWP_options ,] $desc)
+# $mech->post_ok($url, [ \%LWP_options ,] $desc)
+fields:
+  foo: 12
+  bar: 23
+  # creates:   load => bless(\("bar"), 'FileContents')
+  #   if FileContents class overloads stringification with cat($$self), life is good?
+  myfile: !!perl/scalar:FileContents bar
+
+---
+- uri: http://test/home.html
+  description: The very basic tests of functionality
+  title_is: Dean Serenevy
+  contains:
+    - GAP Arrangements
+    - Riverbend Community Math Center
