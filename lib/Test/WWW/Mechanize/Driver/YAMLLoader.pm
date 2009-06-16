@@ -1,5 +1,5 @@
 package Test::WWW::Mechanize::Driver::YAMLLoader;
-use Carp; use strict; use warnings;
+use strict; use warnings;
 our $VERSION = 1.0;
 
 =pod
@@ -10,13 +10,17 @@ Test::WWW::Mechanize::Driver::YAMLLoader - Load Test::WWW::Mechanize tests from 
 
 =head1 SYNOPSIS
 
+ my $loader = Test::WWW::Mechanize::Driver::YAMLLoader->new;
+ my @documents = $loader->load( $file );
+
+This module is used by Test::WWW::Mechanize::Driver to load YAML files.
 
 =cut
 
 sub new {
   my $class = shift;
   require YAML;
-  bless {}, $class;
+  return $class;
 }
 
 sub load {

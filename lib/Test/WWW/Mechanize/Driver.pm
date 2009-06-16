@@ -34,6 +34,10 @@ Write Test::WWW::Mechanize tests in YAML. This module will load the tests
 make a plan and run the tests. Supports every-page tests, SKIP, TODO, and
 any object supporting the Test::WWW::Mechanize interface.
 
+This document focuses on the Test::WWW::Mechanize::Driver object and the
+options it can take. See the L<Manual|Test::WWW::Mechanize::Driver::Manual>
+for a full description of the test data file format.
+
 =head1 USAGE
 
 =head3 new
@@ -225,7 +229,7 @@ sub _load {
     next if $$x{_loaded}{$file}++;
 
     my @docs = eval { $$x{loader}->load( $file ) };
-    die "While parsing test file '$file':\n$@" if $@;
+    die "While parsing test file '$file':\n$@" if $@ or !@docs;
 
     my $document = 1;
     $x->_load_doc( $_, [$file, $document++] ) for @docs;

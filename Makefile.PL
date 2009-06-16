@@ -13,9 +13,8 @@ WriteMakefile(
 sub MY::postamble {
   return <<'MAKE_FRAG';
 .PHONY: coverage
-coverage:
-	cover -delete
-	HARNESS_PERL_SWITCHES=-MDevel::Cover=-select,Test::WWW::Mechanize make test
+coverage: clean
+	HARNESS_PERL_SWITCHES=-MDevel::Cover=-select,Driver prove -I lib t/*.t
 	cover
 MAKE_FRAG
 }

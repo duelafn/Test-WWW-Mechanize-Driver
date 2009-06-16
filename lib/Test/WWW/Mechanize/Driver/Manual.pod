@@ -7,55 +7,233 @@ Test::WWW::Mechanize::Driver::Manual - Writing Tests for Test::WWW::Mechanize::D
 
 =head1 DESCRIPTION
 
-Write Test::WWW::Mechanize tests in YAML. This module will load the tests
-make a plan and run the tests. Supports every-page tests, SKIP, TODO, and
-any object supporting the Test::WWW::Mechanize interface.
+Test::WWW::Mechanize::Driver Allows one to write Test::WWW::Mechanize tests
+in YAML. This module will load the tests make a plan and run the tests.
+Supports every-page tests, SKIP, TODO, and any object supporting the
+Test::WWW::Mechanize interface.
 
+ # sample .t file:
  use strict; use warnings;
  use Test::WWW::Mechanize::Driver;
  use Test::More;
 
  my $tester = Test::WWW::Mechanize::Driver->new(
    load => [ glob( "t/*.yaml" ) ],
-   add_to_plan => 10,
-   first_test => 11,
+   add_to_plan => 10,    # optional
  );
 
- plan tests => $tester->tests;
- ok( ... ); # 10 of your own tests
+ ok( ... ); # ... 10 of your own tests
  $tester->run;
 
+This document focuses on the test data format. See the
+L<Test::WWW::Mechanize::Driver|Test::WWW::Mechanize::Driver> documentation
+for information about writing the perl test driver (*.t) files if you need
+something more fancy than the above example. Examples in this document use
+YAML syntax though it is possible with alternate loaders to store tests in
+another format such as raw perl code.
 
-=head1 USAGE
+=head1 Test File Structure
+
+Each file is called a "stream" which may consist of one or more "documents"
+(this is consistent with YAML terminology). Each document may be any of a
+scalar, hash (mapping in YAMLspeak), or array (sequence). Plain scalar
+documents are treated as comments and are completely ignored by the driver
+module. Hash documents may be used to set default settings for test
+documents following the hash document. Finally, array documents are test
+documents and contain a list of hashes which define the tests.
+
+A simple example showing all three document types:
+
+ --- |
+ 
+ This is a comment document (denoted by the | following the document
+ separator), ignored by Test::WWW::Mechanize::Driver. It might be used to
+ describe the test file or to disable blocks of tests.
+ 
+ ---
+ 
+ # This is a default settings document. YAML comments (such as this one)
+ # may appear here. The following line will set a default "tag" for each
+ # test in this file following this document (it would not affect tests
+ # before this point). [note: tags are not used by the driver, but may be
+ # used by a custom "after_response" callback.]
+ 
+ tag: basic_tests
+ 
+ ---
+ 
+ # This is a test document. Each item defines an arbitrary number of
+ # subtests.
+ 
+ # check title and contents in random order
+ - uri: http://google.com/
+   description: Google main page
+   title_is: Google
+   contains:
+     - Advanced Search
+     - Preferences
+ 
+ # Ensure title is tested before contents
+ - uri: http://yahoo.com/
+   description: Yahoo main page
+   actions:
+     - title_is: Yahoo!
+     - contains:
+       - My Yahoo!
+       - '<li class="mailstatus">Check your mail status:'
 
 
+=head1 Test Documents
 
+The core keys of a test group are.
 
-Test::WWW::Mechanize::Driver::Prove
+=over 4
 
- Fast / Fatal
- Test Selection
+=item uri | url
 
-Test::WWW::Mechanize::Driver
+The only required parameter. Specifies the origin URI for the test group.
+This page will be automatically loaded by the mechanize object. "url" is an
+alias for "uri".
 
- Standard Test::WWW::Mechanize tests
- Logins / who
- GET, POST, ...
- SKIP, TODO URLs
- Every-page Tests; pre_testing => sub { }, test_first => sub { }, test_last => sub { }
+=item parameters | parms | params
 
+Optional hash of parameters to send with the request.
 
-Test::WWW::Mechanize::More
+=item method
 
- Canonicalization (update_html)
- Test vs Production Comparison
+Optional HTTP request method. One of GET, POST, PUT, DELETE.
 
+=item description
 
+Optional test description. Will be added to test messages.
 
+=item actions
 
-=head1 WISHLIST / TODO
+List of mechanize tests and actions to perform. As a convenience, action
+items may be placed in the top-level hash (along with "uri", etc.). Note,
+however, that actions at the top level will be executed in an arbitrary
+order, therefore, any actions involving form submission or that otherwise
+alter the mechanize object's state should be placed in the actions array.
 
-=head2 SKIP, TODO Tests
+=item SKIP
+
+=item TODO
+
+If included, the entire test group will be skipped or marked TODO. The
+value of these options will be used as the message passed to Test::Builder.
+
+=back 4
+
+=head2 Action Items
+
+Action item keys are Test::WWW::Mechanize test method names. The values are
+given as parameters to the corresponding method. The test driver defines a
+few aliases so that any of the C<content_*> methoids may leave off the
+"content_" part. Further, the test driver knows which methods operate on
+only a single item (such as C<content_contains>, C<title_like>, ...) and
+will automatically and properly hand array values.
+
+Example:
+
+ - uri: http://google.com/
+   actions:
+     - title_is: Google
+     - contains:
+       - Advanced Search
+       - Preferences
+     - submit_form_ok:
+         q: foo
+         btnG: Google Search
+     - contains:
+       - en.wikipedia.org/wiki/Foo
+
+is equivalent to:
+
+ $mech->get_ok("http://google.com/");
+ $mech->title_is("Google");
+ $mech->content_contains("Advanced Search");
+ $mech->content_contains("Preferences");
+ $mech->submit_form_ok({ q => "foo", btnG => "Google Search" });
+ $mech->content_contains("en.wikipedia.org/wiki/Foo");
+
+Note, the above YAML could have been written:
+
+ - uri: http://google.com/
+   title_is: Google
+   contains:
+     - Advanced Search
+     - Preferences
+   actions:
+     - submit_form_ok:
+         q: foo
+         btnG: Google Search
+     - contains:
+       - en.wikipedia.org/wiki/Foo
+
+In which case the title_is and first pair of content_contains tests would
+have run first in random order, but the form submission and final
+content_contains test would be performed afterward in the proper order.
+
+=head2 Magic Values (applying templates, posting files)
+
+By placing object references which overload stringification into your test
+descriptions, you can upload external files or create dynamic templated
+parameters.
+
+The YAML syntax for blessing an object is: C<!!perl/REFTYPE:PACKAGE>.
+Test::WWW::Mechanize::Driver defines three classes:
+
+=head3 FileContents
+
+Stringifies to file contents. Files are read in binmode. Sample usage:
+
+ - uri: http://example.com/uploader
+   method: PUT
+   parameters:
+     myfile: !!perl/scalar:FileContents t/test-file.pdf
+
+=head3 ApplyTemplate
+
+Fills in a string using Template.pm.
+
+ - uri: http://example.com/schedule
+   parameters:
+     date: !!perl/scalar:ApplyTemplate '[% today.strftime("%Y-%m-%d") %]'
+
+Some variables will be made available to the template:
+
+=over 4
+
+=item t
+
+The test group object. Includes all keys defined in the test suite (uri,
+parameters, description, ...) including custom keys. Is the same object
+passed to the after_request callback so any modifications made there will be
+available as well.
+
+=item today
+
+The current date as a DateTime object.
+
+=back
+
+=head3 Stacked
+
+This class takes an array reference and blesses the 0th entry into the
+class named in the 1st entry. It then stringifies the result and repeats
+the process with the class given in the next entry. Arbitrarily many
+classes may be stacked in this way.
+
+ - uri: http://example.com/message
+   method: POST
+   user_name: Bob Smiley
+   parameters:
+     message: !!perl/array:Stacked [ t/test-message.tt, FileContents, ApplyTemplate ]
+
+Sample contents of test-message.tt:
+
+ Dude, this webpage rocks! - [% t.user_name %]
+
 
 
 
@@ -85,6 +263,6 @@ dealings in the software.
 
 =head1 SEE ALSO
 
-L<WWW::Mechanize>, L<Test::WWW::Mechanize>
+L<WWW::Mechanize>, L<Test::WWW::Mechanize>, L<Test::WWW::Mechanize::Driver>
 
 =cut
