@@ -119,6 +119,20 @@ sub tests {
   return $tests;
 }
 
+=head3 test_groups
+
+ num groups = $tester->test_groups()
+
+Return number of test groups currently loaded
+
+=cut
+
+sub test_groups {
+  my $x = shift;
+  return 0 unless $$x{groups};
+  return 0 + @{$$x{groups}};
+}
+
 =head3 run
 
  $tester->run()

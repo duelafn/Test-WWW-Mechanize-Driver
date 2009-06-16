@@ -29,5 +29,5 @@ my $tester = Test::WWW::Mechanize::Driver->new(
 $tester->mechanize->my_mech_load_files( glob("t/webpages/*.yml") );
 $tester->run;
 
-my $pages_expected = $tester->pages;
+my $pages_expected = $tester->test_groups;
 is( $pages_expected, $page_count,  'after_response called for each page' );
