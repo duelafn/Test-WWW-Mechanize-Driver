@@ -211,7 +211,7 @@ parameters, description, ...) including custom keys. Is the same object
 passed to the after_request callback so any modifications made there will be
 available as well.
 
-=item today
+=item now
 
 The current date as a DateTime object.
 

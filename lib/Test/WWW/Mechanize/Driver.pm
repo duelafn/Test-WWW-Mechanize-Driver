@@ -2,12 +2,14 @@ package Test::WWW::Mechanize::Driver;
 use Carp; use strict; use warnings;
 use Test::WWW::Mechanize::Driver::YAMLLoader;
 use Test::WWW::Mechanize::Driver::Util qw/ cat TRUE HAS /;
+require Test::WWW::Mechanize::Driver::MagicValues;
 use Test::Builder;
 use File::Spec;
 use List::Util qw/sum/;
 my $Test = Test::Builder->new;
 our $VERSION = 0.5;
 our $TODO;
+our $CURRENT_GROUP;
 
 =pod
 
@@ -182,6 +184,7 @@ initial request.
 
 sub _run_group {
   my ($x, $group) = @_;
+  $CURRENT_GROUP = $group;
 
   if ($$group{SKIP}) {
     local $TODO = undef;

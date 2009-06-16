@@ -1,5 +1,6 @@
 Changes
 lib/Test/WWW/Mechanize/Driver.pm
+lib/Test/WWW/Mechanize/Driver/MagicValues.pm
 lib/Test/WWW/Mechanize/Driver/Manual.pod
 lib/Test/WWW/Mechanize/Driver/Util.pm
 lib/Test/WWW/Mechanize/Driver/YAMLLoader.pm
