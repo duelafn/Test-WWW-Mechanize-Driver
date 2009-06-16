@@ -1,12 +1,8 @@
 ---
 - uri: http://test/home.html
   description: The very basic tests of functionality
+  my_custom_parameter: 1
   title_is: Dean Serenevy
   contains:
     - GAP Arrangements
     - Riverbend Community Math Center
-
-- uri: http://test/missing.html
-  my_skip_opt: 1
-  contains:
-    - The answers to the universe

@@ -7,6 +7,7 @@ use lib qw/ t /;
 
 use MyMechanize;
 use Test::WWW::Mechanize::Driver qw/ Stacked FileContents ApplyTemplate /;
+use Test::More;
 
 my $tester = Test::WWW::Mechanize::Driver->new(
   mechanize => MyMechanize->new,

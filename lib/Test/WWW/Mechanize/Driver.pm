@@ -109,13 +109,7 @@ sub tests {
   my $x = shift;
   my $tests = $$x{add_to_plan} || 0;
   return $tests unless $$x{groups};
-
-  # 1 test for each group (the initial request)
-  $tests += @{$$x{groups}};
-
-  # 1 test for each action in each group
-  $tests += sum(map 0+@{$$_{actions}}, @{$$x{groups}});
-
+  $tests += $x->_tests_in_group($_) for @{$$x{groups}};
   return $tests;
 }
 
@@ -190,13 +184,38 @@ sub _run_group {
   my ($x, $group) = @_;
 
   if ($$group{SKIP}) {
-    $Test->skip($$group{SKIP}) for "get", @{$$group{actions}};
+    local $TODO = undef;
+    $Test->skip($$group{SKIP}) for 1..$x->_tests_in_group($group);
     return;
   }
 
   local $TODO = $$group{TODO};
-  $x->mechanize->get_ok( $$group{uri}, $x->_test_label("get $$group{uri}", @{$$group{id}}) );
+  $x->_make_initial_request( $group );
   $x->_run_test( $group, $_ ) for @{$$group{actions}};
+}
+
+=head3 _make_initial_request
+
+ $tester->_make_initial_request( group hash )
+
+Perform initial GET, POST, ... request. Makes after_response callback if
+present.
+
+=cut
+
+sub _make_initial_request {
+  my ($x, $group) = @_;
+  my $method = ($$group{method} ||= 'GET');
+  my @params = ($$group{parameters} ? $$group{parameters} : ());
+  my $label = $x->_test_label("$method $$group{uri}", @{$$group{id}});
+
+  if (uc($method) eq 'GET') {
+    $x->mechanize->get_ok( $$group{uri}, @params, $label );
+  }
+  else { die "Unimplemented request method: '$method'" }
+
+  $$x{after_response}->($x->mechanize, $group) if $$x{after_response};
+  return 1;
 }
 
 =head3 _run_test
@@ -477,6 +496,33 @@ sub _test_label {
   my ($x, $name, $file, $doc, $group, @id) = @_;
   local $" = '.';
   "$name: file $file, doc $doc, group $group, test @id"
+}
+
+=head3 _tests_in_group
+
+ $tester->_tests_in_group($group)
+
+Calculates number of tests attributable to the given group. Accounts for
+initial requerst, explicit actions, and tests in any callbacks.
+
+=cut
+
+sub _tests_in_group {
+  my ($x, $group) = @_;
+  my $tests = 0;
+
+  # 1 test for the initial request
+  $tests += 1;
+
+  # tests performed in callbacks
+  for (qw/after_response_tests before_request_tests/) {
+    $tests += $$x{$_} || 0;
+  }
+
+  # 1 test for each action in the group
+  $tests += 0+@{$$group{actions}};
+
+  return $tests;
 }
 
 =head3 _autoload
