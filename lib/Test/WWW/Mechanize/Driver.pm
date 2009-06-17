@@ -6,6 +6,7 @@ require Test::WWW::Mechanize::Driver::MagicValues;
 use Test::Builder;
 use File::Spec;
 use List::Util qw/sum/;
+require URI;
 my $Test = Test::Builder->new;
 our $VERSION = 0.5;
 our $TODO;
@@ -47,6 +48,11 @@ for a full description of the test data file format.
  Test::WWW::Mechanize::Driver->new( [ OPTIONS ] )
 
 =over 4
+
+=item base
+
+Base URL for any test uris which are not absolute. If not defined, all test
+uris must be absolute.
 
 =item mechanize
 
@@ -310,7 +316,10 @@ sub _load_doc {
 
 Actually perform test "loading". As test groups are loaded the they are:
 
- * canonicalized: all tests moved to actions array with one test per entry
+ * canonicalized:
+     - all tests moved to actions array with one test per entry
+     - url misspelling -> uri
+     - uri -> $$x{base}/uri if necessary
  * tagged: the test's location in the file is inserted into the test hash
 
 =cut
@@ -385,6 +394,7 @@ sub _load_group {
 
   # accept misspellings
   $$group{uri} ||= delete $$group{url};
+  $$group{uri} = URI->new_abs($$group{uri}, $$x{base})->as_string if $$x{base};
 
   $$group{id} = $id;
   $$group{actions} = $x->_prepare_actions( $group, \@actions, $id );

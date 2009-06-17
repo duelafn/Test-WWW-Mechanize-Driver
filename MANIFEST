@@ -19,6 +19,8 @@ t/10-typical_usage_1.yml
 t/10-typical_usage_2.yml
 t/15-after_response.t
 t/15-after_response.yml
+t/20-base.t
+t/20-base.yml
 t/30-magic_blessed_values.t
 t/30-magic_blessed_values.yml
 t/80-advanced_mech_tests.t
