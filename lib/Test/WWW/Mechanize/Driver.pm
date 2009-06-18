@@ -420,12 +420,6 @@ sub _prepare_actions {
   for my $a (@$actions) {
     $$a{name} = $aliases{$$a{name}} if HAS( \%aliases, $$a{name} );
 
-    # Handle Template variables!
-    # my ($mech, %o, $t) = expand_tmpl(@_);
-
-    # RECURSE!
-    # if ($$a{name} eq 'actions') { }
-
     push @expanded, $x->_expand_tests($group, $a, [@$id, $action++])
   }
 
