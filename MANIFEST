@@ -10,7 +10,6 @@ MANIFEST			This list of files
 README
 t/00-my_mech.t
 t/05-basic.t
-t/05-basic.yml
 t/06-add_to_plan.t
 t/07-auto_loading.t
 t/07-auto_loading.yml
@@ -25,6 +24,7 @@ t/30-magic_blessed_values.t
 t/30-magic_blessed_values.yml
 t/80-advanced_mech_tests.t
 t/80-advanced_mech_tests.yml
+t/basic-named_oddly.yml
 t/MyMechanize.pm
 t/test-file.tt
 t/test-file.txt

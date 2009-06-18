@@ -161,7 +161,9 @@ Return or construct mechanize object
 
 sub mechanize {
   my $x = shift;
-  $$x{mechanize} ||= Test::WWW::Mechanize->new(cookie_jar => {});
+  return $$x{mechanize} if $$x{mechanize};
+  require Test::WWW::Mechanize;
+  $$x{mechanize} = Test::WWW::Mechanize->new(cookie_jar => {});
 }
 
 =head1 INTERNAL METHODS

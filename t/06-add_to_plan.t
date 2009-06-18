@@ -9,7 +9,7 @@ use Test::WWW::Mechanize::Driver;
 my $tester = Test::WWW::Mechanize::Driver->new(
   mechanize => MyMechanize->new,
   add_to_plan => 3,
-  load => "t/05-basic.yml", # 8 tests
+  load => "t/basic-named_oddly.yml", # 8 tests
 );
 $tester->mechanize->my_mech_load_files( glob("t/webpages/*.yml") );
 
