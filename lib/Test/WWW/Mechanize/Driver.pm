@@ -1,7 +1,7 @@
 package Test::WWW::Mechanize::Driver;
 use Carp; use strict; use warnings;
 use Test::WWW::Mechanize::Driver::YAMLLoader;
-use Test::WWW::Mechanize::Driver::Util qw/ cat TRUE HAS /;
+use Test::WWW::Mechanize::Driver::Util qw/ :all /;
 require Test::WWW::Mechanize::Driver::MagicValues;
 use Test::Builder;
 use File::Spec;

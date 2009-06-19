@@ -18,7 +18,118 @@ Test::WWW::Mechanize::Driver::Util - Useful utilities ripped from Dean::Util
 
 =cut
 
-use Dean::Util qw/ INCLUDE_POD cat TRUE HAS /;
+#-----------------------------------------------------------------
+# BEGIN             Dean::Util code version 1.046
+#
+#  use Dean::Util qw/ INCLUDE_POD cat TRUE HAS /;
+
+
+=head3 cat
+
+ my $stuff = cat $file;
+ my $stuff = cat \$mode, $file;
+
+Read in the entirety of a file. If requested in list context, the lines are
+returned. In scalar context, the file is returned as one large string. If a
+string reference C<$mode> is provided as a first argument it will be taken
+as the file mode (the default is "E<lt>").
+
+=cut
+
+#BEGIN: cat
+sub cat {
+  my $mode = (ref($_[0]) eq 'SCALAR') ? ${shift()} : "<";
+  my $f = (@_) ? $_[0] : $_;
+  open my $F, $mode, $f or die "Can't open $f for reading: $!";
+  if (wantarray) {
+    my @x = <$F>; close $F; return @x;
+  } else {
+    local $/ = undef; my $x = <$F>; close $F; return $x;
+  }
+}
+#END: cat
+
+
+=head3 TRUE
+
+ TRUE $hash_ref, qw| key1 arbitrarily/deep/key |;
+ TRUE $hash_ref, @paths, { sep => $separator, false_pat => $pattern };
+
+Safely test for deep key truth. Recursion happens by splitting on
+C<$separator> ("/" by default, set C<$separator> to C<undef> to disable
+this behavior), there is no means for escaping. Returns true only if all
+keys exist and are true. Values matched by C<$pattern> (C<^(?i:false)$> by
+default) as well as an empty list or empty hash will all cause 0 to be
+returned. Array refs are allowed if corresponding path components are
+numeric.
+
+=cut
+
+#BEGIN: TRUE
+sub TRUE {
+  my $x = shift;
+  return 0 unless ref($x);
+  my $o = {};
+  $o = pop if @_ and 'HASH' eq ref($_[-1]);
+  $$o{sep} = '/' unless exists $$o{sep};
+  $$o{false_pat} = '^(?i:false)$' unless exists $$o{false_pat} and defined $$o{false_pat};
+  for (@_) {
+    my @x = ('ARRAY' eq ref) ? @$_ : defined($$o{sep}) ? split($$o{sep}, $_) : ($_);
+    if (ref($x) eq 'ARRAY') {
+      ($#{$x} >= $x[0] and $$x[$x[0]]) or return 0;
+      return 0 if !ref($$x[$x[0]]) and $$x[$x[0]] =~ /$$o{false_pat}/;
+      @{$$x[$x[0]]} or return 0 if ref($$x[$x[0]]) eq 'ARRAY';
+      %{$$x[$x[0]]} or return 0 if ref($$x[$x[0]]) eq 'HASH';
+      TRUE($$x[$x[0]], [@x[1..$#x]], $o) or return 0 if @x > 1;
+    } else {
+      (exists $$x{$x[0]} and $$x{$x[0]}) or return 0;
+      return 0 if !ref($$x{$x[0]}) and $$x{$x[0]} =~ /$$o{false_pat}/;
+      @{$$x{$x[0]}} or return 0 if ref($$x{$x[0]}) eq 'ARRAY';
+      %{$$x{$x[0]}} or return 0 if ref($$x{$x[0]}) eq 'HASH';
+      TRUE($$x{$x[0]}, [@x[1..$#x]], $o) or return 0 if @x > 1;
+    }
+  }
+  return 1;
+}
+#END: TRUE
+
+
+=head3 HAS
+
+ HAS $hash_ref, qw| key1 arbitrarily/deep/key |;
+ HAS $hash_ref, @paths, { sep => $separator };
+
+Safely test for deep key definedness. Recursion happens by splitting on
+C<$separator> ("/" by default), there is no means for escaping. Returns
+true only if all keys exist and are defined. Array refs are allowed if
+corresponding path components are numeric.
+
+=cut
+
+#BEGIN: HAS
+sub HAS {
+  my $x = shift;
+  return 0 unless ref($x);
+  my $o = {};
+  $o = pop if @_ and 'HASH' eq ref($_[-1]);
+  $$o{sep} = '/' unless exists $$o{sep};
+  for (@_) {
+    my @x = ('ARRAY' eq ref) ? @$_ : defined($$o{sep}) ? split($$o{sep}, $_) : ($_);
+    if (ref($x) eq 'ARRAY') {
+      ($#{$x} >= $x[0] and defined $$x[$x[0]]) or return 0;
+      HAS($$x[$x[0]], [@x[1..$#x]], $o) or return 0 if @x > 1;
+    } else {
+      (exists $$x{$x[0]} and defined $$x{$x[0]}) or return 0;
+      HAS($$x{$x[0]}, [@x[1..$#x]], $o) or return 0 if @x > 1;
+    }
+  }
+  return 1;
+}
+#END: HAS
+
+#
+# END               Dean::Util code version 1.046
+#-----------------------------------------------------------------
 
 1;
 
