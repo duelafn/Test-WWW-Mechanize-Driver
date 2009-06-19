@@ -1,22 +1,55 @@
 package Test::WWW::Mechanize::Driver::Util;
-use Carp; use strict; use warnings;
-our $VERSION = 0.1;
+use strict; use warnings;
+our $VERSION = 0.2;
 
 require Exporter;
 our @ISA = qw(Exporter);
 our %EXPORT_TAGS;
-our @EXPORT_OK = qw/ cat TRUE HAS /;
+our @EXPORT_OK = qw/ cat TRUE HAS build_uri /;
 $EXPORT_TAGS{all} = \@EXPORT_OK;
+
+use URI ();
+use URI::QueryParam ();
+use Scalar::Util qw/ reftype /;
 
 =pod
 
 =head1 NAME
 
-Test::WWW::Mechanize::Driver::Util - Useful utilities ripped from Dean::Util
+Test::WWW::Mechanize::Driver::Util - Useful utilities
 
 =head1 USAGE
 
 =cut
+
+=head3 build_uri
+
+ build_uri( $uri, \%params )
+
+Append parameters to a uri. Parameters whose values are array refs will
+expand to include all values.
+
+Example:
+
+ my %params = ( foo => "What's up, doc?",
+                b => [ 1, 2, 3 ]
+              );
+ my $uri = build_uri( "http://example.com/index.pl?foo=bar", \%params );
+ # $uri eq "http://example.com/index.pl?foo=bar&foo=What's+up%2C+Doc%3F$b=1&b=2&b=3
+
+=cut
+
+sub build_uri {
+  my ($u, $p) = @_;
+  return $u unless $p;
+  my $uri = URI->new($u);
+
+  while (my ($k, $v) = each %$p) {
+    $uri->query_param_append($k, (reftype($v) and 'ARRAY' eq reftype($v)) ? @$v : $v);
+  }
+
+  return $uri->as_string
+}
 
 #-----------------------------------------------------------------
 # BEGIN             Dean::Util code version 1.046

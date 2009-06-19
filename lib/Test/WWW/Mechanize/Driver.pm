@@ -4,11 +4,9 @@ use Test::WWW::Mechanize::Driver::YAMLLoader;
 use Test::WWW::Mechanize::Driver::Util qw/ :all /;
 require Test::WWW::Mechanize::Driver::MagicValues;
 use Test::Builder;
-use File::Spec;
-use List::Util qw/sum/;
 require URI;
 my $Test = Test::Builder->new;
-our $VERSION = 0.5;
+our $VERSION = 0.6;
 our $TODO;
 our $CURRENT_GROUP;
 
@@ -221,7 +219,11 @@ sub _make_initial_request {
   my $label = $x->_test_label($group, "$method $$group{uri}", @{$$group{id}});
 
   if (uc($method) eq 'GET') {
-    $x->mechanize->get_ok( $$group{uri}, @params, $label );
+    my $uri = build_uri( $$group{uri}, @params );
+    $x->mechanize->get_ok( $uri, $label );
+  }
+  elsif (uc($method) eq 'POST') {
+    $x->mechanize->post_ok( $$group{uri}, @params, $label );
   }
   else { die "Unimplemented request method: '$method'" }
 
