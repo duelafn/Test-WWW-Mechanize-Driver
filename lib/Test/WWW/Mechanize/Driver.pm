@@ -218,7 +218,7 @@ sub _make_initial_request {
   my ($x, $group) = @_;
   my $method = ($$group{method} ||= 'GET');
   my @params = ($$group{parameters} ? $$group{parameters} : ());
-  my $label = $x->_test_label("$method $$group{uri}", @{$$group{id}});
+  my $label = $x->_test_label($group, "$method $$group{uri}", @{$$group{id}});
 
   if (uc($method) eq 'GET') {
     $x->mechanize->get_ok( $$group{uri}, @params, $label );
@@ -449,7 +449,7 @@ sub _expand_tests {
   # SCALAR TESTS
   if (TRUE( \%scalar_tests, $name )) {
     return map
-      +{ %$action, args => [(($name =~ /_like$/) ? qr/$_/ : $_), $x->_test_label($name, @$id, $test)], id => [@$id, $test++] },
+      +{ %$action, args => [(($name =~ /_like$/) ? qr/$_/ : $_), $x->_test_label($group, $name, @$id, $test)], id => [@$id, $test++] },
         ('ARRAY' eq ref($args)) ? @$args : $args;
   }
 
@@ -457,16 +457,15 @@ sub _expand_tests {
   if (TRUE( \%hash_tests, $name )) {
     my @tests;
     $$action{id} = [@$id, $test++];
-    $$action{args} = [$$action{args}, $x->_test_label($name, @{$$action{id}})];
+    $$action{args} = [$$action{args}, $x->_test_label($group, $name, @{$$action{id}})];
     push @tests, $action;
-    # TODO: push @tests, $x->_every_get_test([@$id, $test++]) if $$x{every_get};
     return @tests;
   }
 
   # BOOLEAN TESTS
   if (TRUE( \%bool_tests, $name )) {
     $$action{id} = $id;
-    $$action{args} = [ $x->_test_label($name, @$id) ];
+    $$action{args} = [ $x->_test_label($group, $name, @$id) ];
     return $action;
   }
 
@@ -493,18 +492,25 @@ sub _expand_tests {
 
 =head3 _test_label
 
- label = $tester->_test_label( name, id list )
+ label = $tester->_test_label( group, name, id list )
 
 Convert id components into something human-readable. For example:
 
- "content_contains: file basic.yml, doc 3, group 5, test 2.b"
+ "[description] content_contains: file basic.yml, doc 3, group 5, test 2.b"
 
 =cut
 
 sub _test_label {
-  my ($x, $name, $file, $doc, $group, @id) = @_;
+  my ($x, $group, $name, $file, $doc, $group_no, @id) = @_;
   local $" = '.';
-  "$name: file $file, doc $doc, group $group, test @id"
+
+  my $desc = "";
+  $desc = "[$$group{description}] " if defined($$group{description});
+
+  my $test = "";
+  $test = ", test @id" if @id;
+
+  "$desc$name: file $file, doc $doc, group $group_no$test"
 }
 
 =head3 _tests_in_group
