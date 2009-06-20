@@ -1,4 +1,5 @@
 package MyMechanize;
+use Test::WWW::Mechanize::Driver::Util qw/ build_uri /;
 use strict; use warnings;
 use base qw/Test::WWW::Mechanize/;
 require URI;
@@ -29,7 +30,14 @@ sub _make_request {
   my $x = shift;
   my $req = shift;
   my $uri = $req->uri;
-  my $base = URI->new_abs( $uri, 'http://localhost/' );
+
+  if ($req->method ne 'GET') {
+    $uri = build_uri($uri, { method => $req->method });
+  }
+
+  if ($req->method eq 'POST' and $req->content) {
+    $uri .= '&'.$req->content;
+  }
 
   die "Request uri '$uri' does not exist in cache\n" unless exists $cache{$uri};
   my $res = HTTP::Response->parse( $cache{$uri}{response} );
