@@ -332,7 +332,13 @@ Actually perform test "loading". As test groups are loaded the they are:
 
 our %config_options = map +($_,1),
 qw/
-    method uri url
+    method uri
+/;
+our %config_aliases =
+qw/
+    url     uri
+    parms   parameters
+    params  parameters
 /;
 
 # mech methods
@@ -382,7 +388,12 @@ sub _load_group {
     if ($_ eq 'actions') { push @actions, @{delete $$group{actions}} }
 
     # leave internal configuration options where they are
-    elsif (TRUE \%config_options, $_) { next; }
+    elsif (TRUE( \%config_options, $_ )
+        or TRUE( \%config_aliases, $_ )
+          ) {
+      $$group{$config_aliases{$_}} = $$group{$_} if TRUE( \%config_aliases, $_ ) and !HAS( $group, $config_aliases{$_} );
+      next;
+    }
 
     # Put anything that looks like a test action on the front of the action
     # list (again, so that explicit action sequences occur after transplanted
@@ -399,8 +410,6 @@ sub _load_group {
     # preserved in the top level group hash.
   }
 
-  # accept misspellings
-  $$group{uri} ||= delete $$group{url};
   $$group{uri} = URI->new_abs($$group{uri}, $$x{base})->as_string if $$x{base};
 
   $$group{id} = $id;

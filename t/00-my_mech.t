@@ -7,7 +7,7 @@ use Test::More tests => 6;
 use MyMechanize;
 my $mech = MyMechanize->new;
 
-is( $mech->my_mech_load_files( glob("t/webpages/*.yml") ), 4, 'load all test pages' );
+is( $mech->my_mech_load_files( glob("t/webpages/*.yml") ), 5, 'load all test pages' );
 
 my $res;
 isa_ok( $res = $mech->get( "http://test/home.html" ), 'HTTP::Response' );
