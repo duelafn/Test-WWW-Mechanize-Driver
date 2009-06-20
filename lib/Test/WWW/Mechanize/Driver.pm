@@ -5,6 +5,8 @@ use Test::WWW::Mechanize::Driver::Util qw/ :all /;
 require Test::WWW::Mechanize::Driver::MagicValues;
 use Test::Builder;
 require URI;
+use Storable qw/dclone/;
+
 my $Test = Test::Builder->new;
 our $VERSION = 0.6;
 our $TODO;
@@ -367,6 +369,7 @@ qw/
 
 sub _load_group {
   my ($x, $group, $id) = @_;
+  $x->_apply_local_config( $group );
 
   # We're all about convenience here, For example, I want to be able to
   # perform simple contains tests without setting up an "actions" sequence.
@@ -582,9 +585,22 @@ hash document in a test configuration file.
 
 sub _push_local_config {
   my ($x, $config) = @_;
-  $$x{_local_config} = $config;
+  $$x{_local_config} ||= {};
+  %{$$x{_local_config}} = (%{$$x{_local_config}}, %$config);
 }
 
+=head3 _apply_local_config
+
+Merge a new configuration into the local configuration. called for each
+hash document in a test configuration file.
+
+=cut
+
+sub _apply_local_config {
+  my ($x, $group) = @_;
+  $$x{_local_config} ||= {};
+  %$group = (%{dclone($$x{_local_config})}, %$group);
+}
 
 
 

@@ -19,8 +19,9 @@ my $tester = Test::WWW::Mechanize::Driver->new(
     isa_ok( $mech, 'MyMechanize',   "first arg is Mechanize object" );
     is( ref($opt), 'HASH',          "second arg is options hash" );
     ok( $$opt{my_custom_parameter}, "contains custom keys" );
+    is( $$opt{tags}, 'foo',         "contains custom keys from HASH document" );
   },
-  after_response_tests => 3,
+  after_response_tests => 4,
   add_to_plan => 1,
 );
 $tester->mechanize->my_mech_load_files( glob("t/webpages/*.yml") );
