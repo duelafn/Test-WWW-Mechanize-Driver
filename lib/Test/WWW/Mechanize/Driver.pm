@@ -202,7 +202,7 @@ sub _run_group {
 
   local $TODO = $$group{TODO};
   $x->_make_initial_request( $group );
-  $x->_run_test( $group, $_ ) for @{$$group{actions}};
+  $x->_run_test( $group, $_ ) for @{$$group{_actions}};
 }
 
 =head3 _make_initial_request
@@ -218,7 +218,7 @@ sub _make_initial_request {
   my ($x, $group) = @_;
   my $method = ($$group{method} ||= 'GET');
   my @params = ($$group{parameters} ? $$group{parameters} : ());
-  my $label = $x->_test_label($group, "$method $$group{uri}", @{$$group{id}});
+  my $label = $x->_test_label($group, "$method $$group{uri}", @{$$group{_id}});
 
   if (uc($method) eq 'GET') {
     my $uri = build_uri( $$group{uri}, @params );
@@ -332,7 +332,7 @@ Actually perform test "loading". As test groups are loaded the they are:
 
 our %config_options = map +($_,1),
 qw/
-    method uri
+    uri parameters method description SKIP TODO
 /;
 our %config_aliases =
 qw/
@@ -378,7 +378,7 @@ sub _load_group {
   $x->_apply_local_config( $group );
 
   # We're all about convenience here, For example, I want to be able to
-  # perform simple contains tests without setting up an "actions" sequence.
+  # perform simple contains tests without setting up an "_actions" sequence.
   # To do that, we need to munge the group hash a bit.
   my @keys = keys %$group;
   my @actions;
@@ -404,7 +404,7 @@ sub _load_group {
         or TRUE( \%mech_action, $_ )
         or TRUE( \%aliases, $_ )
         or $x->mechanize->can($_)
-          ) { unshift @actions, { name => $_, args => delete $$group{$_}, _transplant => 1 } }
+          ) { unshift @actions, { name => $_, args => $$group{$_}, _transplant => 1 } }
 
     # anything else is considered a custom config value and will be
     # preserved in the top level group hash.
@@ -412,8 +412,8 @@ sub _load_group {
 
   $$group{uri} = URI->new_abs($$group{uri}, $$x{base})->as_string if $$x{base};
 
-  $$group{id} = $id;
-  $$group{actions} = $x->_prepare_actions( $group, \@actions, $id );
+  $$group{_id} = $id;
+  $$group{_actions} = $x->_prepare_actions( $group, \@actions, $id );
   push @{$$x{groups}}, $group;
 }
 
@@ -549,7 +549,7 @@ sub _tests_in_group {
   }
 
   # 1 test for each action in the group
-  $tests += 0+@{$$group{actions}};
+  $tests += 0+@{$$group{_actions}};
 
   return $tests;
 }
@@ -615,6 +615,20 @@ sub _apply_local_config {
 
 
 1;
+
+=head1 TODO
+
+=over 4
+
+=item test and perhaps implement proper enctype="multipart/form-data" file uploads
+
+=item HEAD, PUT, DELETE requests
+
+=item Custom Request headers (probably as a "headers" top level hash item so avoid using that as a custom field)
+
+=back
+
+=cut
 
 =head1 AUTHOR
 
