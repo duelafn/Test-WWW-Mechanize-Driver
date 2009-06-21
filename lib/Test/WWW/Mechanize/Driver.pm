@@ -49,10 +49,35 @@ for a full description of the test data file format.
 
 =over 4
 
+=item add_to_plan
+
+Number of tests running outside of Driver control. Use this option if your
+test script perfoirms other tests such as build-up of mock objects.
+
+=item after_response
+
+=item after_response_tests
+
+C<after_response> is a callback sub triggered once per test group (is not
+triggered by submit_form_ok or other actions) immediately after the initial
+response is received. If any tests are run in the callback, the
+C<after_response_tests> option must be set to the number of tests to be run
+each time so that the driver may make the proper plan.
+
 =item base
 
 Base URL for any test uris which are not absolute. If not defined, all test
 uris must be absolute.
+
+=item load
+
+Array ref of file names which should be loaded by the Driver. These tests
+are loaded at object creation time.
+
+=item loader
+
+Name of loader package or object with C<package-E<gt>load( $file )> method.
+Defaults to C<Test::WWW::Mechanize::Driver::YAMLLoader>.
 
 =item mechanize
 
@@ -64,18 +89,19 @@ Override default mechanize object. The default object is:
 
 When true, calling C<-E<gt>run> will not print a test plan.
 
-=item loader
-
-Name of loader package or object with C<package-E<gt>load( $file )> method.
-Defaults to C<Test::WWW::Mechanize::Driver::YAMLLoader>.
-
 =back
 
 =cut
 
+our %valid_params = map +($_,1),
+qw/
+    add_to_plan after_response after_response_tests base load loader mechanize no_plan
+/;
 sub new {
   my $class = shift;
   my %x = @_;
+  my ($invalid) = grep !$valid_params{$_}, keys %x;
+  croak "Invalid Parameter '$invalid'" if defined($invalid);
 
   # Create loader so that "require YAML" happens early on
   $x{loader} ||= Test::WWW::Mechanize::Driver::YAMLLoader->new;
@@ -528,6 +554,8 @@ sub _expand_tests {
     };
     return $action;
   }
+
+  die "Invalid action: '$name'";
 }
 
 =head3 _test_label
