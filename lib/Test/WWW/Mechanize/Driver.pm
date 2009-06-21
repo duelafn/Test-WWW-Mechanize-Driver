@@ -348,7 +348,7 @@ qw/
     base_is base_like base_unlike
     content_is content_contains content_lacks content_like content_unlike
     page_links_content_like page_links_content_unlike
-    links_ok
+    links_ok click_ok
 /;
 
 # values are mech methods
@@ -362,15 +362,21 @@ qw/
 /;
 
 # mech methods
-our %bool_tests = map +($_,1), qw/ page_links_ok /;
-our %hash_tests = map +($_,1), qw/ submit_form_ok stuff_inputs /;
+our %bool_tests = map +($_,1), qw/ page_links_ok html_lint_ok /;
+our %kv_tests = map +($_,1),
+qw/
+    has_tag has_tag_like
+    link_status_is link_status_isnt
+    link_content_like link_content_unlike
+/;
+our %hash_tests = map +($_,1), qw/ submit_form_ok follow_link_ok /;
 our %mech_action = map +($_,1),
 qw/
     get put reload back follow_link form_number form_name
     form_with_fields field select set_fields set_visible tick untick
     click click_button submit submit_form add_header delete_header
     save_content dump_links dump_images dump_forms dump_all redirect_ok
-    request credentials
+    request credentials stuff_inputs
 /;
 
 sub _load_group {
@@ -385,7 +391,13 @@ sub _load_group {
   for (@keys) {
     # the actual "actions" element, pushed to end of actions array so it
     # happens after the toplevel actions.
-    if ($_ eq 'actions') { push @actions, @{delete $$group{actions}} }
+    if ($_ eq 'actions') {
+      for (@{delete $$group{actions}}) {
+        while (my ($k, $v) = each %$_) {
+          push @actions, { name => $k, args => $v };
+        }
+      }
+    }
 
     # leave internal configuration options where they are
     elsif (TRUE( \%config_options, $_ )
@@ -400,6 +412,7 @@ sub _load_group {
     # initial load actions).
     elsif (TRUE( \%scalar_tests, $_ )
         or TRUE( \%bool_tests, $_ )
+        or TRUE( \%kv_tests, $_ )
         or TRUE( \%hash_tests, $_ )
         or TRUE( \%mech_action, $_ )
         or TRUE( \%aliases, $_ )
@@ -465,6 +478,19 @@ sub _expand_tests {
     return map
       +{ %$action, args => [(($name =~ /_like$/) ? qr/$_/ : $_), $x->_test_label($group, $name, @$id, $test)], id => [@$id, $test++] },
         ('ARRAY' eq ref($args)) ? @$args : $args;
+  }
+
+  # KV TESTS
+  if (TRUE( \%kv_tests, $name )) {
+    my @tests;
+    while (my ($k, $v) = each %$args) {
+      push @tests,
+        { %$action, id => [@$id, $test++],
+          args => [$k, (($name =~ /(?:_|_un)like$/) ? qr/$v/ : $v),
+                   $x->_test_label($group, $name, @$id, $test)],
+        };
+    }
+    return @tests;
   }
 
   # HASH TESTS

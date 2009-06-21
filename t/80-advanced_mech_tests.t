@@ -10,6 +10,7 @@ use Test::WWW::Mechanize::Driver;
 
 my $tester = Test::WWW::Mechanize::Driver->new(
   mechanize => MyMechanize->new,
+  base => 'http://test/',
 );
 $tester->mechanize->my_mech_load_files( glob("t/webpages/*.yml") );
 $tester->run;

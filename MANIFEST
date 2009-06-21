@@ -35,3 +35,6 @@ t/webpages/debian.yml
 t/webpages/home.yml
 t/webpages/home_post.yml
 t/webpages/home_post_stuff.yml
+t/webpages/map.yml
+t/webpages/tutors.yml
+t/webpages/tutors2.yml
