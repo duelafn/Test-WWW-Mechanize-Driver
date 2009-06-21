@@ -174,6 +174,23 @@ In which case the title_is and first pair of content_contains tests would
 have run first in random order, but the form submission and final
 content_contains test would be performed afterward in the proper order.
 
+=head2 Mechanize Actions
+
+Mechanize actions may be placed into the action list as long as they have a
+true value in C<%Test::WWW::Mechanize::Driver::mech_action>. ARRAY or HASH
+values undergo exactly one level of "unwrapping".
+
+ # calls $mechanize->foo( "bar", "baz" )
+ foo:
+   - bar
+   - baz
+
+ # calls $mechanize->foo( ["bar", "baz"] )
+ foo:
+   -
+     - bar
+     - baz
+
 =head2 Magic Values (applying templates, posting files)
 
 By placing object references which overload stringification into your test
