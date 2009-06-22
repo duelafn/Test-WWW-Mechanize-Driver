@@ -1,0 +1,40 @@
+name:  Test-WWW-Mechanize-Driver
+blurb: Drive Test::WWW::Mechanize Object Using YAML Configuration Files
+version: 0.6
+
+description: |
+  Test::WWW::Mechanize::Driver Allows one to write Test::WWW::Mechanize tests
+  in YAML. This module will load the tests make a plan and run the tests.
+  Supports every-page tests, SKIP, TODO, and any object supporting the
+  Test::WWW::Mechanize interface.
+  
+  <pre>
+  # simplest .t file:
+  use strict; use warnings;
+  use Test::WWW::Mechanize::Driver;
+  Test::WWW::Mechanize::Driver-&gt;new-&gt;run; # runs basename($0)*.{yaml.yml,dat}
+  
+  # Sample yaml testfile:
+  # check title and contents in random order
+  - uri: http://google.com/
+    description: Google main page
+    title_is: Google
+    contains:
+      - Advanced Search
+      - Preferences
+  # Ensure title is tested before contents
+  - uri: http://yahoo.com/
+    description: Yahoo main page
+    actions:
+      - title_is: Yahoo!
+      - contains:
+        - My Yahoo!
+        - '&lt;li class="mailstatus"&gt;Check your mail status:'
+  </pre>
+
+quicklinks:
+  description: distribution
+  current: Test-WWW-Mechanize-Driver-CURRENT.tar.gz
+
+languages:
+  - Perl
