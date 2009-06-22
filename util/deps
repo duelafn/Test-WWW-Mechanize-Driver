@@ -1,0 +1,2 @@
+#!/bin/bash
+perlcore $(GREP -e '^\s*(?:use|require) (?!Test::WWW::Mechanize::Driver)([^\s;]+)' --output '$1' lib t | sort -u)
