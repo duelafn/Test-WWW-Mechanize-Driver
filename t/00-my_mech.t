@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 use strict; use warnings;
 use lib qw/ lib t /;
-use 5.010;
 
 use Test::More tests => 6;
 use MyMechanize;
