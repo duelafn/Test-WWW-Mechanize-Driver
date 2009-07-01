@@ -9,3 +9,5 @@
 ^MANIFEST\.SKIP$
 ^TODO$
 ^Makefile$
+^experimental$
+^www$
