@@ -17,6 +17,9 @@ requires 'Storable' => 0;
 requires 'URI' => 0;
 requires 'URI::QueryParam' => 0;
 requires 'Test::WWW::Mechanize' => 0;
+test_requires 'DateTime' => 0;
+test_requires 'Template' => 0;
+test_requires 'YAML' => 0;
 
 # standard usage uses these, but they may not be needed if you have an
 # alternate loader/tester or do not use templates.
