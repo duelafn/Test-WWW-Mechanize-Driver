@@ -1,12 +1,14 @@
 name:  Test-WWW-Mechanize-Driver
 blurb: Drive Test::WWW::Mechanize Object Using YAML Configuration Files
-version: 0.6
 
 description: |
   Test::WWW::Mechanize::Driver Allows one to write Test::WWW::Mechanize tests
   in YAML. This module will load the tests make a plan and run the tests.
   Supports every-page tests, SKIP, TODO, and any object supporting the
   Test::WWW::Mechanize interface.
+  
+  This module is available for download from
+  <a href="http://search.cpan.org/search?query=Test-WWW-Mechanize-Driver&mode=dist">CPAN</a>
   
   <pre>
   # simplest .t file:
@@ -31,10 +33,6 @@ description: |
         - My Yahoo!
         - '&lt;li class="mailstatus"&gt;Check your mail status:'
   </pre>
-
-quicklinks:
-  description: distribution
-  current: Test-WWW-Mechanize-Driver-CURRENT.tar.gz
 
 languages:
   - Perl
