@@ -692,7 +692,7 @@ release it to the public.
 
  Dean Serenevy
  dean@serenevy.net
- http://dean.serenevy.net/
+ https://serenevy.net/
 
 =head1 LICENSE
 
