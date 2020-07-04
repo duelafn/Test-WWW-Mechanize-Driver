@@ -1,4 +1,0 @@
-#!/bin/sh
-make clean
-rm -f Makefile.old MANIFEST.bak
-rm -rf cover_db
