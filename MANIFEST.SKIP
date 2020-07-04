@@ -9,5 +9,7 @@
 ^MANIFEST\.SKIP$
 ^TODO$
 ^Makefile$
+^Makefile.old$
 ^experimental$
 ^www$
+^Test\-WWW\-Mechanize\-Driver\-.*\.tar\.gz$
