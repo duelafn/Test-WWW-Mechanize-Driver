@@ -1,7 +1,7 @@
 use inc::Module::Install;
 name           'Test-WWW-Mechanize-Driver';
 perl_version   5.005;
-license        'Public Domain';
+license        'unrestricted'; # Public Domain
 all_from       'lib/Test/WWW/Mechanize/Driver.pm';
 
 
