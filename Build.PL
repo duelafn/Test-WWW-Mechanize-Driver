@@ -6,6 +6,12 @@ Module::Build->new(
     configure_requires => {
         'Module::Build'  => 0,
     },
+    meta_add => {
+        resources => {
+            homepage => 'https://github.com/duelafn/Test-WWW-Mechanize-Driver',
+            repository => 'https://github.com/duelafn/Test-WWW-Mechanize-Driver',
+        },
+    },
     requires => {
         'perl'                 => '5.5.0',
         'Scalar::Util'         => 0,   # Core from perl 5.8 onward
